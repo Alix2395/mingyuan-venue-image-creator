@@ -1,0 +1,7 @@
+-e *.pyc
+__pycache__/
+*.zip
+临时/
+测试/
+成果/
+.DS_Store
