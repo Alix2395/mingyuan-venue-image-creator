@@ -1,7 +1,28 @@
--e *.pyc
+# Python
 __pycache__/
-*.zip
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Temp / Output
 临时/
 测试/
 成果/
+日志/*.log
+
+# Archives
+*.zip
+*.tar.gz
+
+# OS
 .DS_Store
+Thumbs.db
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

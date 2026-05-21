@@ -1,0 +1,35 @@
+{
+  "assets": [
+    {
+      "file": "测试数据/素材/logo_明源云.png",
+      "position": "top-right",
+      "scale": 0.55,
+      "margin": 60
+    },
+    {
+      "file": "测试数据/素材/watermark_copyright.png",
+      "position": "bottom-center",
+      "scale": 1.25,
+      "margin": 50
+    },
+    {
+      "file": "测试数据/素材/qrcode_placeholder.png",
+      "position": "bottom-right",
+      "scale": 1.25,
+      "margin": 70
+    },
+    {
+      "file": "测试数据/素材/badge_new.png",
+      "position": "top-left",
+      "scale": 1.2,
+      "margin": 70
+    }
+  ],
+  "output_quality": 95,
+  "enhance": {
+    "brightness": 1.05,
+    "contrast": 1.10,
+    "color": 1.05,
+    "sharpness": 1.0
+  }
+}
