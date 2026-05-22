@@ -12,25 +12,27 @@
 
 ```mermaid
 flowchart TD
-    A["📦 输入: 场宣素材.zip<br/>└─ 素材/ (PNG)<br/>└─ 原图/ (JPG/PNG)"] --> B
+    A["📦 输入: zip 包素材+原图"] --> B0
     
-    subgraph B[Stage 0 · 素材 & 原图审计]
-        B1["素材清单 + 透明度验证"] --> B2["原图分辨率分布统计"]
+    subgraph B0[Stage 0 · 素材 & 原图审计]
+        B1["素材清单 / 透明度验证"] --> B2["原图分辨率分布统计"]
     end
     
-    B --> C[Stage 1 · 格式规范化<br/>统一至 2K 标准]
-    C --> D[Stage 2 · 轻度优化<br/>+5%亮度 / +10%对比度]
-    D --> E[Stage 3 · 素材叠加<br/>样板确认 → 全量处理]
-    E --> F["📦 打包交付<br/>分目录 → zip → 发送"]
+    B0 --> C[Stage 1 · 格式规范化 → 2K标准]
+    C --> D[Stage 2 · 轻度优化 +5%亮度 +10%对比度]
+    D --> E[Stage 3 · 素材叠加 样板确认 → 全量处理]
+    E --> F["📦 打包交付 zip → 发送"]
     
-    C -.->|横板 | 2560×1440
-    C -.->|竖板 | 1440×2560
+    C -.->|横板 2560×1440| CL[" "]
+    C -.->|竖板 1440×2560| CP[" "]
     
-    style B fill:#e3f2fd,stroke:#1565c0
+    style B0 fill:#e3f2fd,stroke:#1565c0
     style C fill:#fff3e0,stroke:#e65100
     style D fill:#f3e5f5,stroke:#7b1fa2
     style E fill:#e8f5e9,stroke:#2e7d32
     style F fill:#fce4ec,stroke:#c62828
+    style CL fill:transparent,stroke:none
+    style CP fill:transparent,stroke:none
 ```
 
 ---
