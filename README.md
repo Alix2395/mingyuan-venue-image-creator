@@ -43,11 +43,11 @@ flowchart TD
 
 **素材审计**：列出所有 PNG 素材（Logo / 水印 / 二维码 / 徽章），确认文件完整性、透明度（RGBA）和尺寸。若素材缺失或为 RGB 模式则标记告警。
 
-![Stage 0 素材审计](示例/过程预览/stage0_assets_audit_FIXED.png)
+![Stage 0 素材审计](https://github.com/Alix2395/mingyuan-venue-image-creator/releases/download/v0.3.1/stage0-assets-audit.png)
 
 **原图审计**：统计全部原图的分辨率分布——横板/竖板比例、极端比例标注。为后续规范化策略提供依据。
 
-![Stage 0 原图审计](示例/过程预览/stage0_originals_audit_FIXED.png)
+![Stage 0 原图审计](https://github.com/Alix2395/mingyuan-venue-image-creator/releases/download/v0.3.1/stage0-originals-audit.png)
 
 | 指标 | 说明 |
 |------|------|
@@ -74,7 +74,7 @@ flowchart TD
 - ❌ **禁止拉伸变形**
 - ✅ EXIF 方向自动修正（手机竖拍自动旋转）
 
-![Stage 1 规范化对比 — 四种典型裁切策略](示例/过程预览/stage1_normalize_compare_FIXED.png)
+![Stage 1 规范化对比 — 四种典型裁切策略](https://github.com/Alix2395/mingyuan-venue-image-creator/releases/download/v0.3.1/stage1-normalize-compare.png)
 
 *上图展示了四种典型场景的处理策略：4:3→16:9 智能裁切、超宽屏居中裁切、3:4→9:16 智能裁切、超高屏居中裁切*
 
@@ -102,7 +102,7 @@ flowchart TD
 
 对于分辨率已达标或质量退化的图片，自动跳过处理。
 
-![Stage 2 优化前后对比 — 亮度/对比度数据](示例/过程预览/stage2_enhance_compare_FIXED.png)
+![Stage 2 优化前后对比 — 亮度/对比度数据](https://github.com/Alix2395/mingyuan-venue-image-creator/releases/download/v0.3.1/stage2-enhance-compare.png)
 
 *上图展示了四种样本优化前后的亮度均值与对比度变化。参数一致：亮度+5%、对比度+10%，保守且可预期*
 
@@ -134,13 +134,13 @@ flowchart TD
 - ✅ 素材重叠自动检测并告警
 - ❌ `bottom-center` 必须落在底部居中（禁止偏移到画面中部）
 
-![Stage 3 叠加样板 — 横板 + 竖板](示例/过程预览/stage3_overlay_samples_FIXED.png)
+![Stage 3 叠加样板 — 横板 + 竖板](https://github.com/Alix2395/mingyuan-venue-image-creator/releases/download/v0.3.1/stage3-overlay-samples.png)
 
 *上图展示了横板和竖板两种方向下的素材定位效果：右上角 Logo、左上角徽章、右下角二维码、底部居中水印*
 
 **全量成品抽检：** 所有图片叠加完成后，自动生成总览图
 
-![Stage 3 全量成品抽检 — 28张已完成素材叠加](示例/过程预览/stage3_overlay_full_montage_FIXED.png)
+![Stage 3 全量成品抽检 — 28张已完成素材叠加](https://github.com/Alix2395/mingyuan-venue-image-creator/releases/download/v0.3.1/stage3-overlay-montage.png)
 
 *上图以 3×4 网格展示横板与竖板样本各 12 张，最终分辨率统一为 2560×1440（横板）和 1440×2560（竖板）*
 
