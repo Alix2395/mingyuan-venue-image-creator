@@ -30,8 +30,29 @@ GREEN = "#0D9488"
 TEXT = "#111827"
 BORDER = "#CBD5E1"
 
-FONT_REG = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+# 🔴 CJK 字体铁律：必须使用支持中文的字体，禁止用 DejaVu 渲染中文
+CJK_CANDIDATES = [
+    "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/arphic/ukai.ttc",
+    "/usr/share/fonts/truetype/arphic/uming.ttc",
+]
+
+FONT_REG = None
+FONT_BOLD = None
+for p in CJK_CANDIDATES:
+    try:
+        ImageFont.truetype(p, 20)
+        FONT_REG = p
+        break
+    except Exception:
+        continue
+
+if FONT_REG is None:
+    raise RuntimeError("❌ 无可用 CJK 字体！中文将渲染为豆腐块。请安装 fonts-wqy-zenhei 或 fonts-noto-cjk")
+
+FONT_BOLD = FONT_REG  # 文泉驿等 CJK 字体自带粗重感，复用同一路径
 
 
 def font(size: int, bold: bool = False):

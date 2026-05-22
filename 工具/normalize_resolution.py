@@ -5,36 +5,37 @@
 等比智能裁切，居中保留主体，禁止拉伸变形
 
 用法：
-    python normalize_resolution.py <输入目录> <输出目录>
+    python normalize_resolution.py <输入目录> <输出目录> [--json-output <路径>]
 
 输出：自动按横竖分到 <输出目录>/横板/ 和 <输出目录>/竖板/
 """
 
 import sys
-import os
+import json
 from pathlib import Path
 from PIL import Image, ImageOps
 
 # 2K 标准分辨率
 HORIZONTAL_TARGET = (2560, 1440)   # 横板
 VERTICAL_TARGET   = (1440, 2560)   # 竖板
-RATIO_TOLERANCE   = 0.03           # 比例偏差容忍度（3%以内视为相同比例）
+RATIO_TOLERANCE   = 0.03           # 比例偏差容忍度
+SUPPORTED_EXTS    = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".heic", ".heif"}
 
 
 def detect_orientation(w: int, h: int) -> str:
-    """判断横竖：w>h → horizontal，否则 vertical，等宽视为横板"""
-    return "horizontal" if w >= h else "vertical"
+    """判断横竖：w>h → horizontal，否则 vertical"""
+    return "horizontal" if w > h else "vertical"
 
 
 def is_similar_ratio(w: int, h: int, target_w: int, target_h: int) -> bool:
-    """判断原图比例是否与目标比例极其近似"""
+    """判断原图比例是否与目标比例近似（偏差 < RATIO_TOLERANCE）"""
     src_ratio = w / h
     tgt_ratio = target_w / target_h
     return abs(src_ratio - tgt_ratio) < RATIO_TOLERANCE
 
 
 def resize_to_target(img: Image.Image, target: tuple) -> Image.Image:
-    """直接缩放到目标分辨率（比例接近时使用）"""
+    """直接缩放到目标分辨率"""
     return img.resize(target, Image.LANCZOS)
 
 
@@ -58,7 +59,6 @@ def smart_resize_and_crop(img: Image.Image, target_w: int, target_h: int) -> Ima
         new_w = target_w
         new_h = int(src_h * target_w / src_w)
 
-    # 等比缩放
     img_resized = img.resize((new_w, new_h), Image.LANCZOS)
 
     # 居中裁剪
@@ -69,16 +69,58 @@ def smart_resize_and_crop(img: Image.Image, target_w: int, target_h: int) -> Ima
     return img_cropped
 
 
-def process_image(img_path: Path, output_dir: Path) -> tuple:
-    """
-    处理单张图片：
-    返回 (success, target_path, orientation, method)
-    """
+def handle_exif_orientation(img: Image.Image) -> Image.Image:
+    """根据 EXIF 方向标签旋转图片（修正手机竖拍横存的问题）"""
     try:
+        exif = img.getexif()
+        orientation = exif.get(0x0112, 1)
+        if orientation == 3:
+            img = img.rotate(180, expand=True)
+        elif orientation == 6:
+            img = img.rotate(270, expand=True)
+        elif orientation == 8:
+            img = img.rotate(90, expand=True)
+    except Exception:
+        pass  # 无 EXIF 或解析失败，保持不变
+    return img
+
+
+def verify_image(img_path: Path) -> bool:
+    """验证图片文件是否完整可打开"""
+    try:
+        with Image.open(img_path) as img:
+            img.verify()  # 检查文件完整性
+        return True
+    except Exception:
+        return False
+
+
+def process_image(img_path: Path, output_dir: Path) -> dict:
+    """
+    处理单张图片
+    返回结果字典
+    """
+    result = {
+        "file": str(img_path),
+        "status": "error",
+        "error": "",
+        "orientation": "",
+        "method": "",
+        "output": "",
+    }
+
+    try:
+        if not verify_image(img_path):
+            result["error"] = "图片文件损坏或无法打开"
+            return result
+
         img = Image.open(img_path)
-        # 统一转 RGB（去掉 alpha 通道以便后续处理，但保留透明度信息备用）
+
+        # 处理 EXIF 方向
+        img = handle_exif_orientation(img)
+
+        # 统一转 RGB
         if img.mode == "RGBA":
-            # 有透明度：合成到白底
             background = Image.new("RGB", img.size, (255, 255, 255))
             background.paste(img, mask=img.split()[3])
             img = background
@@ -92,41 +134,54 @@ def process_image(img_path: Path, output_dir: Path) -> tuple:
         subdir = "横板" if orient == "horizontal" else "竖版"
 
         if is_similar_ratio(w, h, tw, th):
-            result = resize_to_target(img, target)
+            result_img = resize_to_target(img, target)
             method = "direct_resize"
         else:
-            result = smart_resize_and_crop(img, tw, th)
+            result_img = smart_resize_and_crop(img, tw, th)
             method = "smart_crop"
 
         # 保存
         out_subdir = output_dir / subdir
         out_subdir.mkdir(parents=True, exist_ok=True)
-        out_path = out_subdir / img_path.name
-        # 统一输出为 .jpg（保留原扩展名逻辑）
-        out_path = out_path.with_suffix(".jpg")
-        result.save(out_path, "JPEG", quality=95)
+        out_path = (out_subdir / img_path.name).with_suffix(".jpg")
+        result_img.save(out_path, "JPEG", quality=95)
 
-        return (True, str(out_path), orient, method)
+        # 验证输出文件
+        fsize = out_path.stat().st_size
+        if fsize == 0:
+            result["error"] = "输出文件为空"
+            return result
+
+        result["status"] = "ok"
+        result["output"] = str(out_path)
+        result["orientation"] = orient
+        result["method"] = method
+        result["output_size_kb"] = str(fsize // 1024)
 
     except Exception as e:
-        return (False, str(img_path), str(e), "error")
+        result["error"] = str(e)
+
+    return result
 
 
 def main():
     if len(sys.argv) < 3:
-        print("用法: python normalize_resolution.py <输入目录> <输出目录>")
+        print("用法: python normalize_resolution.py <输入目录> <输出目录> [--json-output <路径>]")
         sys.exit(1)
 
     input_dir = Path(sys.argv[1])
     output_dir = Path(sys.argv[2])
 
+    json_output = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--json-output" and i + 1 < len(sys.argv):
+            json_output = Path(sys.argv[i + 1])
+
     if not input_dir.is_dir():
         print(f"错误: 输入目录不存在: {input_dir}")
         sys.exit(1)
 
-    # 支持的图片格式
-    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp", ".heic", ".heif"}
-    images = [f for f in input_dir.iterdir() if f.suffix.lower() in extensions and f.is_file()]
+    images = sorted([f for f in input_dir.iterdir() if f.suffix.lower() in SUPPORTED_EXTS and f.is_file()])
 
     if not images:
         print("错误: 输入目录中没有找到图片文件")
@@ -137,22 +192,19 @@ def main():
     print(f"   目标: 横板 2560×1440 | 竖板 1440×2560")
     print(f"   输出: {output_dir}/\n")
 
-    stats = {"horizontal": 0, "vertical": 0, "direct_resize": 0, "smart_crop": 0, "error": 0}
+    stats = {"horizontal": 0, "vertical": 0, "direct_resize": 0, "smart_crop": 0, "error": 0, "exif_fixed": 0}
     results = []
 
     for img_path in sorted(images):
-        print(f"  处理: {img_path.name} ... ", end="")
-        success, path_or_err, orient, method = process_image(img_path, output_dir)
-
-        if success:
-            stats[orient] += 1
-            stats[method] += 1
-            print(f"✅ [{orient}] {method}")
-            results.append({"file": str(img_path), "output": path_or_err, "orientation": orient, "method": method, "status": "ok"})
+        r = process_image(img_path, output_dir)
+        if r["status"] == "ok":
+            stats[r["orientation"]] += 1
+            stats[r["method"]] += 1
+            print(f"  ✅ {img_path.name} → [{r['orientation']}] {r['method']} ({r['output_size_kb']}KB)")
         else:
             stats["error"] += 1
-            print(f"❌ {orient}")
-            results.append({"file": str(img_path), "error": path_or_err, "status": "error"})
+            print(f"  ❌ {img_path.name}: {r['error']}")
+        results.append(r)
 
     print(f"\n📊 规范化完成:")
     print(f"   横板: {stats['horizontal']} 张 (直缩 {stats['direct_resize']} / 裁剪 {stats['smart_crop']})")
@@ -160,9 +212,19 @@ def main():
     print(f"   失败: {stats['error']} 张")
     print(f"   输出: {output_dir}/横板/ + {output_dir}/竖版/")
 
-    return stats["error"] == 0
+    # JSON 输出供脚本调用
+    if json_output:
+        with open(json_output, "w", encoding="utf-8") as f:
+            json.dump({
+                "stats": stats,
+                "results": results,
+                "total": len(images),
+                "success": len(images) - stats["error"],
+            }, f, ensure_ascii=False, indent=2)
+        print(f"   JSON报告: {json_output}")
+
+    sys.exit(0 if stats["error"] == 0 else 1)
 
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    main()

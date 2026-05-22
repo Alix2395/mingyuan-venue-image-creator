@@ -11,6 +11,7 @@ build/
 测试/
 成果/
 日志/*.log
+日志/*.json
 
 # Archives
 *.zip
@@ -26,3 +27,11 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Config
+.env
+*.env.local
+
+# Reports
+checklist_report.json
+overlay_positions.json
