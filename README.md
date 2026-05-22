@@ -18,15 +18,12 @@ flowchart LR
         B1["素材清单"] --> B2["分辨率统计"]
     end
     
-    B0 --> C[Stage 1 · 格式规范化 → 2K]
+    B0 --> C["Stage 1 · 格式规范化 · 横板 2560×1440 / 竖板 1440×2560"]
     C --> D[Stage 2 · 轻度优化]
     D --> E[Stage 3 · 素材叠加]
     E --> G{样板确认?}
     G -->|✅ 确认| F["📦 打包交付 zip"]
     G -->|🔄 调整| E
-    
-    C -.->|横板 2560×1440| CL[" "]
-    C -.->|竖板 1440×2560| CP[" "]
     
     style B0 fill:#e3f2fd,stroke:#1565c0
     style C fill:#fff3e0,stroke:#e65100
@@ -34,8 +31,6 @@ flowchart LR
     style E fill:#e8f5e9,stroke:#2e7d32
     style F fill:#fce4ec,stroke:#c62828
     style G fill:#fff8e1,stroke:#f9a825
-    style CL fill:transparent,stroke:none
-    style CP fill:transparent,stroke:none
 ```
 
 ---
