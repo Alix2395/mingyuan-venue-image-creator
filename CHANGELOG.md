@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.3 (2026-05-25) — HTML 多版本预览
+
+### Features
+- 新增 `generate_html_preview.py`：成品多版本浏览器预览页，自动分组/点击放大
+- 集成到阶段4打包交付流程，纳入门禁B推送要求
+- SKILL.md 描述和用途更新，包含"HTML多版本预览"
+
+---
+
 ## v0.3.1 (2026-05-22) — README 工作流可视化
 
 ### Changes
