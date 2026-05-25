@@ -1,8 +1,8 @@
 # 明源场宣图简易制作 (Mingyuan Venue Image Creator)
 
-> 批量场宣图片规范化处理工具链 —— 格式标准化 → 轻度优化 → 素材叠加 → 打包交付
+> 批量场宣图片规范化处理工具链 —— 格式标准化 → 轻度优化 → 素材叠加 → HTML多版本预览 → 打包交付
 
-[![Version](https://img.shields.io/badge/version-0.3.1-blue)](https://github.com/Alix2395/mingyuan-venue-image-creator/releases)
+[![Version](https://img.shields.io/badge/version-0.3.3-blue)](https://github.com/Alix2395/mingyuan-venue-image-creator/releases)
 [![Python](https://img.shields.io/badge/python-3.8%2B-green)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
@@ -22,7 +22,8 @@ flowchart LR
     C --> D[Stage 2 · 轻度优化]
     D --> E[Stage 3 · 素材叠加]
     E --> G{样板确认?}
-    G -->|✅ 确认| F["📦 打包交付 zip"]
+    G -->|✅ 确认| H["📄 HTML 多版本预览"]
+    H --> F["📦 打包交付 zip"]
     G -->|🔄 调整| E
     
     style B0 fill:#e3f2fd,stroke:#1565c0
@@ -146,6 +147,22 @@ flowchart LR
 
 ---
 
+### Stage 4 — HTML 多版本预览
+
+> **目的**：将所有成品图片生成可交互的 HTML 浏览器预览页，方便对比不同变体
+
+样板确认后、打包交付前，自动调用 `generate_html_preview.py` 扫描成品目录，按背景分组、变体分类，生成独立 HTML 文件（无需网络，浏览器直接打开）：
+
+- ✅ 点击大图放大预览，Esc 关闭
+- ✅ 多背景 × 多变体对比一目了然
+- ✅ 随 zip 一起交付用户
+
+```bash
+python 工具/generate_html_preview.py 临时/final --output 成果/preview.html --title "场宣图成品预览"
+```
+
+---
+
 ## 🚀 快速开始
 
 ### 环境要求
@@ -195,6 +212,7 @@ python 工具/checklist_validator.py 临时/final
 | `工具/generate_test_data.py` | 测试数据生成 | ✅ seed支持 |
 | `工具/checklist_validator.py` | 产出质量验证 | ✅ 多维度检查 |
 | `工具/create_process_previews.py` | 过程预览拼图生成 | ✅ CJK字体 |
+| `工具/generate_html_preview.py` | HTML多版本预览页生成 | ✅ v0.3.3 |
 
 ---
 
@@ -227,6 +245,7 @@ python 工具/checklist_validator.py 临时/final
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| **v0.3.3** | 2026-05-25 | 🖼️ 新增 HTML 多版本预览页，集成到阶段4交付流程 |
 | **v0.3.1** | 2026-05-22 | 📊 README 重写：工作流可视化 + 各阶段预览图 + 过程效果展示 |
 | **v0.3.0** | 2026-05-22 | 🔒 安全加固：107项审计修复、CJK字体门禁、EXIF处理、退化解检测 |
 | **v0.2.0** | 2026-05-21 | 🚀 过程预览系统、测试数据集、仓库重构 |
