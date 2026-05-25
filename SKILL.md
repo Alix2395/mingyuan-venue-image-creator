@@ -5,7 +5,7 @@ description: 明源场宣图片批量规范化处理：生成/审计素材、2K 
 
 # 明源场宣图简易制作
 
-> 版本: 0.3.0
+> 版本: 0.3.1
 > 作者: Alix（明源云海南）
 > 用途: 批量场宣图片规范化处理——格式标准化 + 轻度优化 + 素材叠加 + 过程预览 + 打包交付
 > 依赖: Python 3.8+, Pillow≥8.0, NumPy（可选）
@@ -59,7 +59,18 @@ image_path = "过程预览/stage_X_xxx.png"
 
 ## 一、触发条件
 
-- 用户说"场宣图"、"明源场宣"、"批量处理图片叠加素材"
+以下任一关键词或场景触发本 skill：
+
+**关键词触发：**
+- 场宣图 / 场宣测试 / 场宣测试样张
+- 明源场宣 / 明源活动logo / 明源528 / 明源528活动logo
+- 明源宣传图 / 明源活动宣传
+- 原图自行联网找高清风景壁纸，并把活动/logo素材叠加到 2560×1440 或 2K 横板
+- 右上角logo / 右上角双logo / 右上角两个logo / 右下角logo / 国资右下角logo（且上下文涉及明源/场宣）
+- 明源528 / 明源活动logo / 明源528活动logo
+- 活动宣传图（明源地产场景）
+
+**场景触发：**
 - 用户发送 zip 压缩包（含 `素材/` `原图/` 两个文件夹）
 - 用户要求对图片进行 2K 标准化 + 素材叠加
 - 用户要求跑测试流程/演示模式
@@ -93,7 +104,9 @@ image_path = "过程预览/stage_X_xxx.png"
     ▼
 [阶段3] 素材叠加 ── 先样板确认
     │  横板样板 ×1 发给用户确认
-    │  确认后全量处理
+    │  ┌─ ✅ 确认 → 全量处理 ─┐
+    │  │  🔄 调整 → 返回重做  │  ← 反馈闭环
+    │  └────────────────────┘
     │  输出: final/
     │
     ▼
@@ -200,8 +213,16 @@ image_path = "过程预览/stage_X_xxx.png"
 | `工具/overlay_assets.py` | PNG素材叠加 | 优化后图片+素材 | 最终成品目录 |
 | `工具/pipeline.py` | 一键全链路 | zip包+配置 | 成果zip |
 | `工具/generate_test_data.py` | 生成测试数据 | 参数配置 | 测试用zip |
-| `工具/checklist_validator.py` | 检查清单验证 | 产出目录 | 验证报告 |
+| `工具/checklist_validator.py` | 产出质量验证 | 产出目录 | 验证报告 |
 | `工具/create_process_previews.py` | 过程预览拼图生成 | 工作目录 | 各阶段对比PNG |
+
+**参考文件：**
+- `references/test-workflow-with-real-images.md` — 真实图片替代测试数据方案
+- `references/test-with-picsum.md` — picsum.photos 下载示例
+- `references/CHANGELOG.md` — 版本变更日志
+- `references/README.md` — 仓库 README 副本
+- `references/v0.3.0-audit-methodology.md` — 107项深度自检方法论
+- `references/github-readme-image-workflow.md` — GitHub Release 资产发布 + Mermaid 流程图规则
 
 ---
 
@@ -245,9 +266,11 @@ image_path = "过程预览/stage_X_xxx.png"
 
 ## 八、GitHub 发布流程
 
+### 代码发布
+
 ```bash
 # 1. 拉取最新
-git pull origin main --rebase
+git pull origin master --rebase
 
 # 2. 更新版本号（SKILL.md 顶栏版本字段）
 # 3. 提交
@@ -257,17 +280,67 @@ git add -A && git commit -m "vX.Y.Z: 变更说明"
 git tag vX.Y.Z
 
 # 5. 推送
-git push origin main --tags
+git push origin master --tags
 ```
+
+### README 图片发布（门禁C）
+
+**铁律：GitHub README 中所有图片必须使用 Release 资产 URL，禁止使用相对路径。**
+
+原因：GitHub 在 README 中渲染相对路径图片时，若路径含中文/特殊字符或目录层级复杂，图片会显示为断裂链接。
+
+**正确做法：**
+
+#### 方案A：通过 GitHub API 创建 Release + 上传资产（推荐）
+
+```bash
+TOKEN=你的GitHubToken
+RID=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  https://api.github.com/repos/OWNER/REPO/releases \
+  -d '{"tag_name":"vX.Y.Z", "name":"vX.Y.Z — 标题"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+
+# 逐个上传图片资产
+for f in image1.png image2.png; do
+  curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+    -H "Content-Type: image/png" \
+    "https://uploads.github.com/repos/OWNER/REPO/releases/${RID}/assets?name=${f}" \
+    --data-binary @"${f}"
+done
+```
+
+#### 方案B：复制图片到 assets/ 目录后通过 raw.githubusercontent.com 引用
+
+```markdown
+![图片说明](https://raw.githubusercontent.com/OWNER/REPO/master/assets/workflow/xxx.png)
+```
+
+**注意：**
+- 图片文件名必须全英文，不含中文/空格/特殊字符
+- README 中引用格式：`![说明](https://github.com/OWNER/REPO/releases/download/vX.Y.Z/xxx.png)`
+- 图片作为 Release 资产上传后，访问路径固定为 `releases/download/vX.Y.Z/xxx.png`
+- 每次更新图片需重新上传到 Release（同名覆盖）或创建新 Release
+
+### Mermaid 流程图注意事项
+
+在 GitHub README 中嵌入 Mermaid 流程图时，必须遵守以下规则：
+
+1. **禁止使用 HTML 标签** — `<br/>`、`<br>` 等会导致渲染失败（红色报错）。用 `→`、空格、精简文字代替换行
+2. **禁止挂在空的目标节点** — `C -.->|label` 缺少目标节点会报错。应补透明节点：`C -.->|label| CL[" "]` + `style CL fill:transparent,stroke:none`
+3. **子图与节点命名冲突** — 子图名 `B[xxx]` 与外部节点 `B` 冲突时，改用 `B0[xxx]`
+4. **方向选择** — 流水线式流程用 `LR`（横向），层级结构用 `TD`（纵向）
+5. **闭环结构** — 关键决策点（如样板确认）必须有 → 反馈回路，展示完整的确认/调整闭环
 
 ### 版本记录
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
-| v0.3.0 | 2026-05-22 | 107项审计修复、CJK字体门禁、过程图推送铁律 |
+| v0.3.1 | 2026-05-22 | README 图片发布门禁（Release 资产）、Mermaid 流程图规则、样板确认反馈闭环 |
+| v0.3.0 | 2026-05-22 | 107项审计修复、CJK字体门禁、过程图推送铁律、质量加固 |
 | v0.2.0 | 2026-05-21 | 过程预览系统、测试数据集、仓库重构 |
 | v0.0.1 | 2026-05-15 | 初始版本 |
 
 ---
 
-> 版本: 0.3.0 | 作者: Alix（明源云海南） | 更新时间: 2026-05-22
+> 版本: 0.3.1 | 作者: Alix（明源云海南） | 更新时间: 2026-05-22
